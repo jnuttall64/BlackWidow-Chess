@@ -7,10 +7,13 @@ import com.chess.engine.classic.player.BlackPlayer;
 import com.chess.engine.classic.player.Player;
 import com.chess.engine.classic.player.WhitePlayer;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -104,7 +107,11 @@ public final class Board {
     }
 
     public static Board createStandardBoard() {
-        return STANDARD_BOARD;
+    	return STANDARD_BOARD;
+    }
+    
+    public static Board create960Board() {
+    	return create960BoardImpl();
     }
 
     private static Board createStandardBoardImpl() {
@@ -147,6 +154,109 @@ public final class Board {
         builder.setMoveMaker(Alliance.WHITE);
         //build the board
         return builder.build();
+    }
+    
+    private static Board create960BoardImpl() {
+    	final Builder builder = new Builder();
+    	// White Layout - Pawns
+    	Random rng = new Random();
+    	int[] blackLayout = new int[8];
+    	ArrayList<Integer> whiteLayout = new ArrayList<>(Arrays.asList(56,57,58,59,60,61,62,63));
+    	
+    	builder.setPiece(new Pawn(Alliance.WHITE, 48));
+    	builder.setPiece(new Pawn(Alliance.WHITE, 49));
+    	builder.setPiece(new Pawn(Alliance.WHITE, 50));
+    	builder.setPiece(new Pawn(Alliance.WHITE, 51));
+    	builder.setPiece(new Pawn(Alliance.WHITE, 52));
+    	builder.setPiece(new Pawn(Alliance.WHITE, 53));
+    	builder.setPiece(new Pawn(Alliance.WHITE, 54));
+    	builder.setPiece(new Pawn(Alliance.WHITE, 55));
+    	
+    	int firstBishop, secondBishop;
+    	
+    	do {
+    		firstBishop = whiteLayout.get(rng.nextInt(whiteLayout.size()));
+    		secondBishop = whiteLayout.get(rng.nextInt(whiteLayout.size()));
+    	} while(!checkBishopPlacements(firstBishop, secondBishop));
+    	
+    	blackLayout[2] = firstBishop - 56;
+    	blackLayout[5] = secondBishop - 56;
+    	
+    	builder.setPiece(new Bishop(Alliance.WHITE, firstBishop));
+    	whiteLayout.remove(new Integer(firstBishop));
+    	builder.setPiece(new Bishop(Alliance.WHITE, secondBishop));
+    	whiteLayout.remove(new Integer(secondBishop));
+    	
+    	int queenSpot = whiteLayout.get(rng.nextInt(whiteLayout.size()));
+    	blackLayout[3] = queenSpot - 56;
+    	builder.setPiece(new Queen(Alliance.WHITE, queenSpot));
+    	whiteLayout.remove(new Integer(queenSpot));
+    	
+    	int firstKnight = whiteLayout.get(rng.nextInt(whiteLayout.size()));
+    	blackLayout[1] = firstKnight - 56;
+    	builder.setPiece(new Knight(Alliance.WHITE, firstKnight));    	
+    	whiteLayout.remove(new Integer(firstKnight));
+    	
+    	int secondKnight = whiteLayout.get(rng.nextInt(whiteLayout.size()));
+    	blackLayout[6] = secondKnight - 56;
+    	builder.setPiece(new Knight(Alliance.WHITE, secondKnight));
+    	whiteLayout.remove(new Integer(secondKnight));
+    	
+    	builder.setPiece(new Rook(Alliance.WHITE, whiteLayout.get(0)));
+    	blackLayout[0] = whiteLayout.get(0) - 56;
+    	whiteLayout.remove(0);
+    	builder.setPiece(new King(Alliance.WHITE, whiteLayout.get(0), false, false));
+    	blackLayout[4] = whiteLayout.get(0) - 56;
+    	whiteLayout.remove(0);
+    	builder.setPiece(new Rook(Alliance.WHITE, whiteLayout.get(0)));
+    	blackLayout[7] = whiteLayout.get(0) - 56;
+    	whiteLayout.remove(0);
+    	
+    	// Black Layout - Pawns
+        builder.setPiece(new Pawn(Alliance.BLACK, 8));
+        builder.setPiece(new Pawn(Alliance.BLACK, 9));
+        builder.setPiece(new Pawn(Alliance.BLACK, 10));
+        builder.setPiece(new Pawn(Alliance.BLACK, 11));
+        builder.setPiece(new Pawn(Alliance.BLACK, 12));
+        builder.setPiece(new Pawn(Alliance.BLACK, 13));
+        builder.setPiece(new Pawn(Alliance.BLACK, 14));
+        builder.setPiece(new Pawn(Alliance.BLACK, 15));
+        
+        
+        
+        builder.setPiece(new Rook(Alliance.BLACK, blackLayout[0]));
+        builder.setPiece(new Knight(Alliance.BLACK, blackLayout[1]));
+        builder.setPiece(new Bishop(Alliance.BLACK, blackLayout[2]));
+        builder.setPiece(new Queen(Alliance.BLACK, blackLayout[3]));
+        builder.setPiece(new King(Alliance.BLACK, blackLayout[4], false, false));
+        builder.setPiece(new Bishop(Alliance.BLACK, blackLayout[5]));
+        builder.setPiece(new Knight(Alliance.BLACK, blackLayout[6]));
+        builder.setPiece(new Rook(Alliance.BLACK, blackLayout[7]));
+        //white to move
+        builder.setMoveMaker(Alliance.WHITE);
+    	return builder.build();
+    }
+    
+    private static boolean checkBishopPlacements(int firstBishop, int secondBishop) {
+    	if(firstBishop == secondBishop) {
+    		return false;
+    	}
+    	if(firstBishop % 2 == 0) {
+    		if(secondBishop % 2 == 1) {
+    			return true;
+    		}
+    		else {
+    			return false;
+    		}
+    	}
+    	else {
+    		if(secondBishop % 2 == 0) {
+    			return true;
+    		}
+    		else {
+    			return false;
+    		}
+    	}
     }
 
     private Collection<Move> calculateLegalMoves(final Collection<Piece> pieces) {
